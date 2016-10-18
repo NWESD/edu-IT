@@ -1,14 +1,11 @@
 Setting up the Office 365 license script.
 
-1)  Copy scripts
-	Place the Update-MsolUserLicenses.ps1 and Get-MsolRecursiveGroupMember.ps1 in the same folder.
+1)  Copy scripts - Pace the Update-MsolUserLicenses.ps1 and Get-MsolRecursiveGroupMember.ps1 in the same folder.
 
-2)  Install Azure AD powershell module
-	Go to https://msdn.microsoft.com/en-us/library/azure/jj151815%28v=azure.98%29.aspx#bkmk_installmodule for more information.
+2)  Install Azure AD powershell module - Go to https://msdn.microsoft.com/en-us/library/azure/jj151815%28v=azure.98%29.aspx#bkmk_installmodule for more information.
 
 3)  What AD group do you want apply the license to?
 	Currently the script will only accept one group as a variable but it is smart enough to understand nested groups.
-	Replace the parameter $StaffGroup with the group you want to use
 
 4)  What License do you want to use?
 	Open up power shell and run get-MsolAccountSku to view your current available licenses.
