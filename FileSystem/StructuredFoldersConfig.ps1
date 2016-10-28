@@ -148,8 +148,8 @@ $userstree2 =@{
 #########################################
 
 $FolderTree = @(
-    $userstree2
     $userstree
+    $userstree2
 )
 
 
