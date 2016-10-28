@@ -23,20 +23,20 @@ Create-StructuredFolders -Account "domain\bsmith" -config "c:\StructuredFoldersC
 
 This will use the config located at c:\StructuredFoldersConfig.ps1 and create folders with the 
 dynamic name of bsmith.
+Mandatory=$true
 #>
 
 
 
 [cmdletBinding()]
 param(
-    [parameter(Mandatory=$true,
-               Position=0,
+    [parameter(Position=0,
                ValueFromPipeline=$True,
                ValueFromPipelineByPropertyName=$True)]
               [Alias('UserPrincipalName')]
-              [string[]]$Account,
-    [parameter(Mandatory=$true)]
-             [string]$Config
+              [string[]]$Account = "kbunker@nwesd.org",
+    [parameter()]
+             [string]$Config = "C:\cabs\edu-IT\FileSystem\StructuredFoldersConfig.ps1"
 )
 
 
@@ -55,40 +55,8 @@ begin
         Write-Error "Can not access $Config"
         exit
     }
-
-    <#    
-    This is the function that does most of the work.  it must be done as a function
-    because it calles its self to recursivly create subfolders
-    #>
-    Function Create-folders{
-        Param (
-        $Folders,
-        $name,
-        $root,
-        $DisableInharitance,
-        $Permissions
-        )
-
-        $path = "$root\$name"
-
-        if(!(Test-Path $path)) {
-            Write-Verbose "Createing: Createing directory $path\$name"
-            New-Item -Path $root -Name $name -ItemType Directory | Out-Null
-        }else{
-            Write-Verbose "Existing: $path\$name already exists"
-        }
-        if($folders -ne $null){
-           foreach($sub in $folders){
-                if($sub.keys -match 'Name'){
-                    Create-folders -root "$root\$name" @sub
-                }Else{
-                    Create-folders -name $DynamicFolderName -root "$root\$name" @sub
-                }
-            }
-        }
-    }
-
 }
+
 process
 {
 
@@ -103,12 +71,46 @@ process
         exit
     }
 
-    foreach($folder1 in $FolderTree) {
-       
-        if($folder1.keys -match 'Name'){
-            Create-folders @folder1 
-        }Else{
-            Create-folders -name $DynamicFolderName @folder1
+    $Dirs = New-Object System.Collections.ArrayList
+
+    # Feed the config into the arrray so we can process it.
+    foreach ($Tree in $FolderTree){
+        $Dirs.Add($Tree) | Out-Null
+    }
+
+    # Process the folders to create.
+    while ( $Dirs.Count -ge 0 ){
+        $ProcessDirs = $Dirs.Clone()
+        if ($ProcessDirs.count -eq 0) {
+            break
+        }
+        $ProcessDirs | ForEach-Object {
+            if(!($_.keys -match 'Root')){
+                Write-Error "The root folder of each tree should have the ROOT variable defined!  Check your configuration!"
+                exit
+            }
+            # Assign the Dynamic Folder name created above.
+            if(!($_.keys -match 'Name')){
+                $_.Name = $DynamicFolderName
+            }
+            
+            $Folder = $_.root + "\" +$_.Name
+
+            if(Test-Path $folder){
+                Write-host "Folder $folder already created" -ForegroundColor Green
+            }else{
+                Write-Host "Createing Folder: " $Folder
+                New-Item -Path $_.root -Name $_.Name -ItemType Directory | Out-Null
+            }
+            
+            # Check to see if their are subfolders to create and add the to the list to process
+            If($_.keys -match "Folders"){
+                $_.folders | ForEach-Object{
+                    $_.root = $Folder
+                    $Dirs.add($_)| Out-Null
+                }
+            }
+            $Dirs.Remove($_)
         }
     }
 }
