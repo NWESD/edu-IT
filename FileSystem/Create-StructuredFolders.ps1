@@ -56,17 +56,6 @@ begin
         exit
     }
 
-    <#
-    Format the name of any folder you want to dynamicly name.  This variable will be the
-    name of any folder defined in the structuredfolderconfig without a name.
-    #>
-    if($Account -match "@"){
-        $DynamicFolderName = ($Account.Split(“@”)[0]) 
-    }Else{
-        Write-Error "Username must be in <username>@<domain> format"
-        exit
-    }
-
     <#    
     This is the function that does most of the work.  it must be done as a function
     because it calles its self to recursivly create subfolders
@@ -102,6 +91,18 @@ begin
 }
 process
 {
+
+    <#
+    Format the name of any folder you want to dynamicly name.  This variable will be the
+    name of any folder defined in the structuredfolderconfig without a name.
+    #>
+    if($Account -match "@"){
+        $DynamicFolderName = ($Account.Split(“@”)[0]) 
+    }Else{
+        Write-Error "Username must be in <username>@<domain> format"
+        exit
+    }
+
     foreach($folder1 in $FolderTree) {
        
         if($folder1.keys -match 'Name'){
