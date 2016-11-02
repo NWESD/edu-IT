@@ -30,13 +30,14 @@ Mandatory=$true
 
 [cmdletBinding()]
 param(
-    [parameter(Position=0,
+    [parameter(Mandatory=$true,
+               Position=0,
                ValueFromPipeline=$True,
                ValueFromPipelineByPropertyName=$True)]
-              [Alias('UserPrincipalName')]
-              [string[]]$Account = "kbunker@nwesd.org",
-    [parameter()]
-             [string]$Config = "C:\cabs\edu-IT\FileSystem\StructuredFoldersConfig.ps1"
+              [Alias("UserPrincipalName")]
+              [string]$Account,
+    [parameter(Mandatory=$true)]
+             [string]$Config
 )
 
 
@@ -71,6 +72,7 @@ process
         exit
     }
 
+
     $Dirs = New-Object System.Collections.ArrayList
 
     # Feed the config into the arrray so we can process it.
@@ -85,22 +87,26 @@ process
             break
         }
         $ProcessDirs | ForEach-Object {
+            # Give an error if the config does not have a root option set for the first folder of the tree.
             if(!($_.keys -match 'Root')){
                 Write-Error "The root folder of each tree should have the ROOT variable defined!  Check your configuration!"
                 exit
             }
-            # Assign the Dynamic Folder name created above.
+            # Check to see if we need to assign the Dynamic folder name or use the one in the config.
             if(!($_.keys -match 'Name')){
-                $_.Name = $DynamicFolderName
+                $Folder = $_.root + "\" +$DynamicFolderName
+                $folderName = $DynamicFolderName
+            }Else{
+                $Folder = $_.root + "\" +$_.Name
+                $FolderName = $_.name
             }
             
-            $Folder = $_.root + "\" +$_.Name
-
+            #Check to see if folder already exists and if not create it
             if(Test-Path $folder){
-                Write-host "Folder $folder already created" -ForegroundColor Green
+                Write-Verbose "Folder $folder already created"
             }else{
-                Write-Host "Createing Folder: " $Folder
-                New-Item -Path $_.root -Name $_.Name -ItemType Directory | Out-Null
+                Write-Verbose "Createing Folder: $Folder"
+                New-Item -Path $_.root -Name $FolderName -ItemType Directory | Out-Null
             }
             
             # Check to see if their are subfolders to create and add the to the list to process
