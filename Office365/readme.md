@@ -1,6 +1,6 @@
 Setting up the Office 365 license script.
 
-1)  Copy scripts - Pace the Update-MsolUserLicenses.ps1 and Get-MsolRecursiveGroupMember.ps1 in the same folder.
+1)  Copy scripts - Place the Update-MsolUserLicenses.ps1 and Get-MsolRecursiveGroupMember.ps1 in the same folder.
 
 2)  Install Azure AD powershell module - Go to https://msdn.microsoft.com/en-us/library/azure/jj151815%28v=azure.98%29.aspx#bkmk_installmodule for more information.
 
