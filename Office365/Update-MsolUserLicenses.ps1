@@ -124,7 +124,7 @@ If ($Operation -eq 'Both' -or $Operation -eq 'Remove') {
     $BadUsers = Get-MsolUser -MaxResults 100 | Where-Object {$_.IsLicensed -eq $true -and $_.BlockCredential -eq $true}
     Foreach ($user in $BadUsers){
         ForEach ($lic in $user.Licenses){
-            #Set-MsolUserLicense -UserPrincipalName $user.UserPrincipalName -RemoveLicenses  $lic.AccountSkuId
+            Set-MsolUserLicense -UserPrincipalName $user.UserPrincipalName -RemoveLicenses  $lic.AccountSkuId
         }
         Write-Verbose "$($user.DisplayName) - License removed" 
     }
