@@ -3,15 +3,15 @@
 This script will add/remove o365 licenses for a selected group.
 
 .DESCRIPTION
-This script connectes to Microsofts Windows Azure Active Directory and adds licenses for
-office 365 to all users that are part of the specificed AD group(and all nested groups).  
+This script connects to Microsoft’s Windows Azure Active Directory and adds licenses for
+office 365 to all users that are part of the specified AD group(and all nested groups).  
 By default the script will also search for disabled groups and remove any license they are
 assigned.  The script will search for all members of the specified group that don't
 have a License and add one.
 
 This script does have some issues.  It does not check what type of license is applied to 
-the user it just checkes if the user is licensed.  So this script will not work if you are
-moveing from one type of license to another.
+the user it just checks if the user is licensed.  So this script will not work if you are
+moving from one type of license to another.
 
 To get a list of valid licenses for your domain use these commands 
 
@@ -29,17 +29,21 @@ Accept a [System.Management.Automation.PSCredential] directly, so the script can
 be used by people with valid credentials that don't have a saved file
 
 .PARAMETER Operation
-By default we will add and remove licesnes to the approrpriate accounts.  Passing
-Add, or Remove to this parmater will result in only the selected task be preformed.
+By default we will Add licenses to the appropriate accounts.  Passing Both, Add, or Remove
+to this parameter will result in only the selected task be preformed.
 
 .PARAMETER Group
 The group to activate licenses for.
 
-.PARAMETER AddExchange
-By defoule the exchagne option of the license is disabled.  Add this switch to enable it.
+.PARAMETER DisabledPlans
+If you want to disable any of the individual plans for a license pass a comma separated list to this variable.
+for example "EXCHANGE_S_STANDARD", "YAMMER_EDU"
+
+To get a list of available plans for a given license run this command:
+  (Get-MsolAccountSku | where {$_.AccountSkuId -eq '<AccountSkuId>'}).ServiceStatus
 
 .PARAMETER License
-The licese string you want the script to use.  To get a list of valid licenses use these commands 
+The license string you want the script to use.  To get a list of valid licenses use these commands 
 
 $cred = Get-Credential
 Connect-MsolService -Credential $cred
@@ -58,9 +62,14 @@ This method is useful when running interactively.
     $creds = Get-Credential
     .\Update-MsolUserLicenses.ps1 -Credential $creds -License "something" -Group "somegroup" -verbose 
 
+.EXAMPLE
+
+An example of disabling the exchange plan for a license 
+ .\Update-MsolUserLicenses.ps1 -Credential $creds -License "something" -Group "somegroup" -DisabledPlans "EXCHANGE_S_STANDARD" -verbose 
+
+#> 
 
 
-#>
 
 [cmdletBinding()]
 param(
@@ -72,13 +81,13 @@ param(
     [parameter(ParameterSetName='CredFile',
                Mandatory=$true)]
               [string]$CredentialFile,
-    [ValidateSet('All','Add','Remove')] 
-				[string]$Operation='All',
+    [ValidateSet('Both','Add','Remove')] 
+				[string]$Operation='Add',
     [parameter(Mandatory=$true)]
 			   [string]$Group,
     [parameter(Mandatory=$true)]
 			   [string]$License,
-               [switch]$AddExchange		   
+               [array]$DisabledPlans		   
 )
 Set-StrictMode -Version Latest
 
@@ -109,25 +118,31 @@ if (-not($MSOLAccountSku)) {
     Connect-MsolService -Credential $Credential
 }
 
-If ($Operation -eq 'All' -or $Operation -eq 'Remove') {
+If ($Operation -eq 'Both' -or $Operation -eq 'Remove') {
     #  Search for users that are licensed but have disabled accounts and remove their licenses
     Write-Verbose "Removing licenses for inactive staff"
-    Get-MsolUser -all | Where-Object {$_.IsLicensed -eq $true -and $_.BlockCredential -eq $true} | `
-        Set-MsolUserLicense -RemoveLicenses  $License
+    $BadUsers = Get-MsolUser -MaxResults 100 | Where-Object {$_.IsLicensed -eq $true -and $_.BlockCredential -eq $true}
+    Foreach ($user in $BadUsers){
+        ForEach ($lic in $user.Licenses){
+            #Set-MsolUserLicense -UserPrincipalName $user.UserPrincipalName -RemoveLicenses  $lic.AccountSkuId
+        }
+        Write-Verbose "$($user.DisplayName) - License removed" 
+    }
 
 }
 
-If ($Operation -eq 'All' -or $Operation -eq 'Add') {
+
+
+If ($Operation -eq 'Both' -or $Operation -eq 'Add') {
     Write-Verbose "Adding licenses for staff"
 
     #  Set the License options We want.  This command sets the we want to use.  If the addexchagne optons is set
     #  we will also enable the exchagne portion of the license if not we will disable "Exchange Online ‎(Plan 1)‎" 
-    if ($AddExchange){
-        $options = New-MsolLicenseOptions -AccountSkuId $License
-        Write-Verbose "Exchange Enabled"
+    if ($DisabledPlans){
+        $options = New-MsolLicenseOptions -AccountSkuId $License -DisabledPlans $DisabledPlans
+        Write-Verbose "Plans Disabled: $DisabledPlans"
     }else{
-        $options = New-MsolLicenseOptions -AccountSkuId $License -DisabledPlans EXCHANGE_S_STANDARD
-        Write-Verbose "Exchange Disabled"
+        $options = New-MsolLicenseOptions -AccountSkuId $License 
     }
 
     & "$PSScriptRoot\.\Get-MsolRecursiveGroupMember" -SearchString $Group | Get-MsolUser | `
