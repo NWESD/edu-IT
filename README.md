@@ -1,1 +1,4 @@
 # edu-IT
+Northwest Educational Service District (NWESD) is one of nine educational service districts in the state of Washington that provides administrative and instructional support services to public school districts, and all state-approved private schools. NWESD's area includes 35 public school districts and several private schools in Island, San Juan, Skagit, Snohomish, and Whatcom counties. The school districts in our region serve 170,000 students with varying languages, special needs, and learning styles. Our staff of administrators, educators, and support personnel work to provide quality professional development opportunities and student programs, while providing administrative support and technical assistance to local school districts.
+
+This repository is for scripts we have created both for our in house IT support and for scripts we have created while helping districts.  Each script should include documentation on how to modify it for your environment. 
