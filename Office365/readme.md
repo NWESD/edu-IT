@@ -11,9 +11,9 @@ Setting up the Office 365 license script.
 	Open up power shell and run get-MsolAccountSku to view your current available licenses.
 	To get a list of valid licenses for your domain use these commands 
 
-    $cred = Get-Credential
-    Connect-MsolService -Credential $cred
-    Get-MsolAccountSku
+*    $cred = Get-Credential
+*    Connect-MsolService -Credential $cred
+*    Get-MsolAccountSku
 
 	Run the below command to see who is currently licensed in your organization and what license they have.
     Get-MsolUser -all | Where-Object {$_.IsLicensed -eq $true} | select DisplayName,Licenses
